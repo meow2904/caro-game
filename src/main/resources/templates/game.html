@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Game X-O</title>
+</head>
+<body>
+    <h1>Game X-O</h1>
+    <p>Zoom ID: <span id="zoomIdSpan"></span></p>
+
+    <div id="gameBoard">
+        <!-- Bảng caro sẽ tạo ở đây -->
+    </div>
+
+    <script>
+        const zoomId = "{{zoomId}}"; // Thymeleaf sẽ render zoomId
+        document.getElementById("zoomIdSpan").textContent = zoomId;
+
+        // Lấy tên người chơi từ sessionStorage
+        const playerName = sessionStorage.getItem("playerName") || "Người chơi";
+
+        // Kết nối WebSocket
+        const ws = new WebSocket(`ws://${window.location.host}/ws/${zoomId}`);
+        ws.onopen = () => console.log(playerName + " đã kết nối WebSocket");
+        ws.onmessage = (msg) => console.log("Nhận dữ liệu:", msg.data);
+        ws.onclose = () => console.log("Ngắt kết nối WebSocket");
+
+        // Sau này thêm logic gửi/nhận nước đi
+    </script>
+</body>
+</html>

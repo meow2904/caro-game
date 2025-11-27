@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-CaroGameApplication<caro-game>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.myproject.caro_game.CaroGameApplication",
+            "projectName": "caro-game",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
