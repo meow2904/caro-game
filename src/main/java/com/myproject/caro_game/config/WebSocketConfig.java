@@ -16,6 +16,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         config.enableSimpleBroker("/topic", "/queue");
         // Prefix cho các message từ client gửi lên
         config.setApplicationDestinationPrefixes("/app");
+
+        // Prefix cho user-specific messages
+        config.setUserDestinationPrefix("/user");
     }
 
     @Override

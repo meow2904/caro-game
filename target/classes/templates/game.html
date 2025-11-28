@@ -4,170 +4,249 @@
 <head>
     <meta charset="UTF-8">
     <title>Game X-O</title>
-
+    <link rel="stylesheet" href="/css/board.css">
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
     <style>
-        #gameBoard {
-            margin-top: 20px;
-            display: grid;
-            grid-template-columns: repeat(20, 30px);
-            grid-gap: 2px;
+        /* Additional styles for join box */
+        body {
+            display: flex;
+            flex-direction: column;
         }
 
-        .cell {
-            width: 30px;
-            height: 30px;
-            border: 1px solid #ddd;
+        #topbar {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            align-items: center;
+        }
+
+        .info-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .info-item {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            cursor: pointer;
+            gap: 8px;
+            font-size: 14px;
+            color: #555;
         }
 
-        .hidden {
-            display: none;
+        .info-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .info-value {
+            padding: 4px 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
         }
 
         #joinBox {
-            margin-top: 20px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            min-width: 350px;
+            text-align: center;
+        }
+
+        #joinBox h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 24px;
+        }
+
+        #joinBox p {
+            margin: 0 0 25px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        #joinBox input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+
+        #joinBox input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        #joinBox button {
+            width: 100%;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.3s;
+        }
+
+        #joinBox button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        #joinBox button:active {
+            transform: translateY(0);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #canvasWrap {
+            position: relative;
+            flex: 1;
+            overflow: hidden;
+            background: #f5f6fa;
+        }
+
+        #board {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            cursor: grab;
+        }
+
+        #board:active {
+            cursor: grabbing;
+        }
+
+        /* Overlay when join box is shown */
+        #canvasWrap.disabled::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(245, 246, 250, 0.95);
+            z-index: 999;
+        }
+
+        #startBtn {
+            padding: 8px 16px;
+            margin-left: 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        #startBtn.hidden {
+            display: none;
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 260px;
+            text-align: center;
+        }
+
+        .modal-content button {
+            margin: 10px;
+            padding: 10px 16px;
         }
     </style>
 </head>
 
 <body>
-    <h2>Game Caro Online</h2>
+    <!-- Top bar with game info -->
+    <div id="topbar">
+        <div class="info-group">
+            <div class="info-item">
+                <span class="info-label">🎮 Room ID:</span>
+                <span class="info-value" id="zoomIdSpan">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">👤 Player:</span>
+                <span class="info-value" id="playerName">Waiting...</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Role:</span>
+                <span class="info-value" id="roleSpan">Waiting...</span>
+            </div>
 
-    <p>Zoom ID: <span id="zoomIdSpan"></span></p>
-    <p>Vai trò: <span id="roleSpan"></span></p>
-
-    <!-- Khối JOIN dành cho người chơi 2 -->
-    <div id="joinBox" class="hidden">
-        <input type="text" id="joinName" placeholder="Tên người chơi">
-        <button id="joinBtn">Join Room</button>
+            <div class="info-item">
+                <span class="info-label">Turn:</span>
+                <span class="info-value" id="turnSpan"></span>
+            </div>
+        </div>
     </div>
 
-    <div id="gameBoard"></div>
+    <button id="startBtn" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#startModal" >Start Game</button>
+    <div class="modal fade" id="startModal" tabindex="-1" startModalaria-hidden="true">
+        <div class="modal-content">
+            <h3>🔰 Choose who goes first</h3>
+            <input type="radio" id="hostFirstBtn" name="firstTurn" value="host">
+            <label for="hostFirstBtn">You go first</label>
+            <input type="radio" id="opponentFirstBtn" name="firstTurn" value="opponent">
+            <label for="opponentFirstBtn">Opponent goes first</label>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">Choose</button>
+        </div>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+    <!-- Canvas wrapper -->
+    <div id="canvasWrap" class="disabled">
+        <canvas id="board"></canvas>
 
-    <script>
-        let zoomId = null;
-        let userId = null;
-        let role = null;
-        let stompClient = null;
-
-        // ---------------- MAIN SCRIPT ------------------
-        (function init() {
-            const urlParts = window.location.pathname.split('/');
-            const zoomFromURL = urlParts[urlParts.length - 1];
-
-            zoomId = sessionStorage.getItem("zoomId") || zoomFromURL;
-            userId = sessionStorage.getItem("userId");
-            role = sessionStorage.getItem("role");
-
-            document.getElementById("zoomIdSpan").textContent = zoomId || "Chưa có";
-
-            // Người chơi 2 chưa join → hiện Form Join
-            if (!role) {
-                document.getElementById("joinBox").classList.remove("hidden");
-
-                document.getElementById("joinBtn").onclick = joinRoom;
-                return; // stop code until user join
-            }
-
-            // Đã có role ⇒ vào game
-            document.getElementById("roleSpan").textContent = role;
-
-            createBoard();
-            connectWS();
-
-        })();
-
-        // ------------- JOIN ROOM (người chơi 2) --------------
-        async function joinRoom() {
-            const name = document.getElementById("joinName").value.trim();
-            if (!name) return alert("Nhập tên!");
-
-            const res = await fetch("/api/join", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    zoomId: zoomId,
-                    playerName: name })
-            });
-            const data = await res.json();
-
-            // Lưu vào session
-            sessionStorage.setItem("zoomId", data.zoomId);
-            sessionStorage.setItem("userId", data.userId);
-            sessionStorage.setItem("role", data.role);
-            sessionStorage.setItem("playerName", name);
-
-            location.reload(); // Load lại trang để chạy block dành cho player 2
-        }
-
-        // --------------- TẠO BÀN CỜ ----------------
-        function createBoard() {
-            const board = document.getElementById("gameBoard");
-            board.innerHTML = "";
-
-            for (let i = 0; i < 400; i++) {
-                const cell = document.createElement("div");
-                cell.classList.add("cell");
-                cell.dataset.index = i;
-
-                cell.addEventListener("click", () => handleClick(i));
-
-                board.appendChild(cell);
-            }
-        }
-
-        // --------------- WEBSOCKET --------------------
-        function connectWS() {
-            const socket = new SockJS(`/ws?zoomId=${zoomId}&userId=${userId}`);
-            stompClient = Stomp.over(socket);
-            stompClient.debug = () => { };
-            stompClient.connect(
-                { zoomId, userId },
-                frame => {
-                    console.log("WS Connected:", frame);
-
-                    // Subscribe phòng
-                    stompClient.subscribe(`/topic/room.${zoomId}`, msg => {
-                        const payload = JSON.parse(msg.body);
-                        console.log("Server gửi:", payload);
-
-                        if (payload.type === "MOVE") updateCell(payload.index, payload.symbol);
-                        if (payload.type === "START") alert("Game bắt đầu!");
-                    });
-
-                    // Player1 gửi tín hiệu START
-                    if (role === "PLAYER_1") {
-                        stompClient.send("/app/start", {}, JSON.stringify({ zoomId }));
-                    }
-                }
-            );
-
-        }
-
-        // --------------- GỬI NƯỚC ĐI -----------------
-        function handleClick(index) {
-            stompClient.send("/app/move", {}, JSON.stringify({
-                zoomId,
-                userId,
-                index
-            }));
-        }
-
-        // --------------- UPDATE UI -------------------
-        function updateCell(index, symbol) {
-            const cell = document.querySelector(`[data-index='${index}']`);
-            if (cell) cell.textContent = symbol;
-        }
-    </script>
+        <!-- Join box overlay -->
+        <div id="joinBox" class="hidden">
+            <h3>🎯 Join Game Room</h3>
+            <p>Enter your name to start playing</p>
+            <input type="text" id="joinName" placeholder="Your name" maxlength="20" autocomplete="off">
+            <button id="joinBtn">Join Now</button>
+        </div>
+    </div>
+    <script src="/js/board.js"></script>
 </body>
 
 </html>

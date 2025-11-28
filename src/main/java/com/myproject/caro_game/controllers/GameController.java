@@ -14,7 +14,6 @@ import com.myproject.caro_game.services.GameService;
 @RestController
 @RequestMapping("/api")
 public class GameController {
-
     private final GameService gameService;
 
     public GameController(GameService gameService) {

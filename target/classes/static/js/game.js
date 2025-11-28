@@ -1,11 +1,6 @@
-
 async function newGame() {
     const zoomLink = document.getElementById("zoomLink");
-
-    
-
     const playerName = document.getElementById("playerName").value.trim();
-
     if (!playerName) {
         alert("Vui lòng nhập tên của bạn!");
         return;
@@ -19,7 +14,7 @@ async function newGame() {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({ playerName: playerName })
-            
+
         });
         const data = await response.json();
         const zoomId = data.zoomId;

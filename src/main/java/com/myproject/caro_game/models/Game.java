@@ -28,6 +28,10 @@ public class Game {
         return currentPlayer;
     }
 
+    public void setCurrentPlayer(Player player) {
+        this.currentPlayer = player;
+    }
+
     public void switchPlayer() {
         if (players.size() < 2) return;
         currentPlayer = (currentPlayer == players.get(0)) ? players.get(1) : players.get(0);
