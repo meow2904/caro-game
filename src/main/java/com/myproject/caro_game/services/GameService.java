@@ -9,30 +9,31 @@ import org.springframework.stereotype.Service;
 import com.myproject.caro_game.models.Game;
 import com.myproject.caro_game.models.Move;
 import com.myproject.caro_game.models.Player;
+import com.myproject.caro_game.models.dto.UserRoomResponse;
 
 @Service
 public class GameService {
     private final Map<String, Game> games = new HashMap<>();
 
-    public String createRoom(String playerName) {
+    public UserRoomResponse createRoom(String playerName) {
         String zoomId = UUID.randomUUID().toString();
         Game game = new Game();
         Player player1 = new Player(playerName, 'X');
         game.addPlayer(player1);
         games.put(zoomId, game);
-        return zoomId;
+        return new UserRoomResponse(zoomId, player1.getUserId(), "player1");
     }
 
     public Game getGame(String zoomId) {
         return games.get(zoomId);
     }
 
-    public Player addPlayerToRoom(String zoomId, String playerName) {
+    public UserRoomResponse joinToRoom(String zoomId, String playerName) {
         Game game = games.get(zoomId);
         if (game == null) return null;
         Player player2 = new Player(playerName, 'O');
         game.addPlayer(player2);
-        return player2;
+        return new UserRoomResponse(zoomId, player2.getUserId(), "player2");
     }
 
     public boolean placeMove(String zoomId, Move move) {

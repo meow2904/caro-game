@@ -1,31 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Game X-O</title>
-</head>
-<body>
-    <h1>Game X-O</h1>
-    <p>Zoom ID: <span id="zoomIdSpan"></span></p>
 
-    <div id="gameBoard">
-        <!-- Bảng caro sẽ tạo ở đây -->
+    <style>
+        #gameBoard {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(20, 30px);
+            grid-gap: 2px;
+        }
+
+        .cell {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #joinBox {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Game Caro Online</h2>
+
+    <p>Zoom ID: <span id="zoomIdSpan"></span></p>
+    <p>Vai trò: <span id="roleSpan"></span></p>
+
+    <!-- Khối JOIN dành cho người chơi 2 -->
+    <div id="joinBox" class="hidden">
+        <input type="text" id="joinName" placeholder="Tên người chơi">
+        <button id="joinBtn">Join Room</button>
     </div>
 
+    <div id="gameBoard"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+
     <script>
-        const zoomId = "{{zoomId}}"; // Thymeleaf sẽ render zoomId
-        document.getElementById("zoomIdSpan").textContent = zoomId;
+        let zoomId = null;
+        let userId = null;
+        let role = null;
+        let stompClient = null;
 
-        // Lấy tên người chơi từ sessionStorage
-        const playerName = sessionStorage.getItem("playerName") || "Người chơi";
+        // ---------------- MAIN SCRIPT ------------------
+        (function init() {
+            const urlParts = window.location.pathname.split('/');
+            const zoomFromURL = urlParts[urlParts.length - 1];
 
-        // Kết nối WebSocket
-        const ws = new WebSocket(`ws://${window.location.host}/ws/${zoomId}`);
-        ws.onopen = () => console.log(playerName + " đã kết nối WebSocket");
-        ws.onmessage = (msg) => console.log("Nhận dữ liệu:", msg.data);
-        ws.onclose = () => console.log("Ngắt kết nối WebSocket");
+            zoomId = sessionStorage.getItem("zoomId") || zoomFromURL;
+            userId = sessionStorage.getItem("userId");
+            role = sessionStorage.getItem("role");
 
-        // Sau này thêm logic gửi/nhận nước đi
+            document.getElementById("zoomIdSpan").textContent = zoomId || "Chưa có";
+
+            // Người chơi 2 chưa join → hiện Form Join
+            if (!role) {
+                document.getElementById("joinBox").classList.remove("hidden");
+
+                document.getElementById("joinBtn").onclick = joinRoom;
+                return; // stop code until user join
+            }
+
+            // Đã có role ⇒ vào game
+            document.getElementById("roleSpan").textContent = role;
+
+            createBoard();
+            connectWS();
+
+        })();
+
+        // ------------- JOIN ROOM (người chơi 2) --------------
+        async function joinRoom() {
+            const name = document.getElementById("joinName").value.trim();
+            if (!name) return alert("Nhập tên!");
+
+            const res = await fetch("/api/join", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    zoomId: zoomId,
+                    playerName: name })
+            });
+            const data = await res.json();
+
+            // Lưu vào session
+            sessionStorage.setItem("zoomId", data.zoomId);
+            sessionStorage.setItem("userId", data.userId);
+            sessionStorage.setItem("role", data.role);
+            sessionStorage.setItem("playerName", name);
+
+            location.reload(); // Load lại trang để chạy block dành cho player 2
+        }
+
+        // --------------- TẠO BÀN CỜ ----------------
+        function createBoard() {
+            const board = document.getElementById("gameBoard");
+            board.innerHTML = "";
+
+            for (let i = 0; i < 400; i++) {
+                const cell = document.createElement("div");
+                cell.classList.add("cell");
+                cell.dataset.index = i;
+
+                cell.addEventListener("click", () => handleClick(i));
+
+                board.appendChild(cell);
+            }
+        }
+
+        // --------------- WEBSOCKET --------------------
+        function connectWS() {
+            const socket = new SockJS(`/ws?zoomId=${zoomId}&userId=${userId}`);
+            stompClient = Stomp.over(socket);
+            stompClient.debug = () => { };
+            stompClient.connect(
+                { zoomId, userId },
+                frame => {
+                    console.log("WS Connected:", frame);
+
+                    // Subscribe phòng
+                    stompClient.subscribe(`/topic/room.${zoomId}`, msg => {
+                        const payload = JSON.parse(msg.body);
+                        console.log("Server gửi:", payload);
+
+                        if (payload.type === "MOVE") updateCell(payload.index, payload.symbol);
+                        if (payload.type === "START") alert("Game bắt đầu!");
+                    });
+
+                    // Player1 gửi tín hiệu START
+                    if (role === "PLAYER_1") {
+                        stompClient.send("/app/start", {}, JSON.stringify({ zoomId }));
+                    }
+                }
+            );
+
+        }
+
+        // --------------- GỬI NƯỚC ĐI -----------------
+        function handleClick(index) {
+            stompClient.send("/app/move", {}, JSON.stringify({
+                zoomId,
+                userId,
+                index
+            }));
+        }
+
+        // --------------- UPDATE UI -------------------
+        function updateCell(index, symbol) {
+            const cell = document.querySelector(`[data-index='${index}']`);
+            if (cell) cell.textContent = symbol;
+        }
     </script>
 </body>
+
 </html>

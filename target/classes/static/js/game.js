@@ -15,14 +15,24 @@ async function newGame() {
         // Gọi API tạo phòng
         const response = await fetch("/api/createZoom", {
             method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
             body: JSON.stringify({ playerName: playerName })
+            
         });
         const data = await response.json();
         const zoomId = data.zoomId;
+        const userId = data.userId;
+        const role = data.role;
+        sessionStorage.setItem("zoomId", zoomId);
+        sessionStorage.setItem("userId", userId);
+        sessionStorage.setItem("role", role);
+
         zoomLink.innerHTML = `Link game: <a href="/game/${zoomId}" target="_blank">${zoomId}</a>`;
 
-        // // Lưu tên người chơi tạm (nếu muốn)
-        // sessionStorage.setItem("playerName", playerName);
+        // Lưu tên người chơi tạm (nếu muốn)
+        sessionStorage.setItem("playerName", playerName);
 
         // Chuyển sang trang game
         window.location.href = `/game/${zoomId}`;
@@ -35,6 +45,6 @@ async function newGame() {
 
 // Gắn sự kiện nút khi DOM đã load
 document.addEventListener("DOMContentLoaded", () => {
-    const createBtn = document.getElementById("newGameBtn");
-    createBtn.addEventListener("click", createGame);
+    const createBtn = document.getElementById("createGameBtn");
+    createBtn.addEventListener("click", newGame);
 });

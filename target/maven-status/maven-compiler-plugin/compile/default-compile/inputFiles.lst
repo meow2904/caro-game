@@ -1,0 +1,14 @@
+D:\CodePractice\caro-game\src\main\java\com\myproject\caro_game\CaroGameApplication.java
+D:\CodePractice\caro-game\src\main\java\com\myproject\caro_game\config\WebSocketConfig.java
+D:\CodePractice\caro-game\src\main\java\com\myproject\caro_game\config\WebSocketEventListener.java
+D:\CodePractice\caro-game\src\main\java\com\myproject\caro_game\controllers\GameController.java
+D:\CodePractice\caro-game\src\main\java\com\myproject\caro_game\controllers\GamePageController.java
+D:\CodePractice\caro-game\src\main\java\com\myproject\caro_game\models\BaseEntity.java
+D:\CodePractice\caro-game\src\main\java\com\myproject\caro_game\models\Board.java
+D:\CodePractice\caro-game\src\main\java\com\myproject\caro_game\models\dto\CreateZoomDto.java
+D:\CodePractice\caro-game\src\main\java\com\myproject\caro_game\models\Game.java
+D:\CodePractice\caro-game\src\main\java\com\myproject\caro_game\models\Move.java
+D:\CodePractice\caro-game\src\main\java\com\myproject\caro_game\models\Player.java
+D:\CodePractice\caro-game\src\main\java\com\myproject\caro_game\models\Point.java
+D:\CodePractice\caro-game\src\main\java\com\myproject\caro_game\services\GameService.java
+D:\CodePractice\caro-game\src\main\java\com\myproject\caro_game\services\WebSocketSessionService.java

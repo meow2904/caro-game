@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
@@ -17,14 +18,12 @@ public class WebSocketEventListener {
 
     // Khi client connect
     @EventListener
-    public void handleWebSocketConnectListener(SessionConnectedEvent event) {
+    public void handleWebSocketConnectListener(SessionConnectEvent event) {
         StompHeaderAccessor sha = StompHeaderAccessor.wrap(event.getMessage());
         String sessionId = sha.getSessionId();
 
-        // Lấy header zoomId và userId do client gửi
-        String zoomId = sha.getFirstNativeHeader("zoomId");
-        String userId = sha.getFirstNativeHeader("userId");
-
+        String userId = (String) sha.getSessionAttributes().get("userId");
+        String zoomId = (String) sha.getSessionAttributes().get("zoomId");
         if (zoomId != null && userId != null) {
             sessionService.registerSession(zoomId, userId, sessionId);
             System.out.println("User " + userId + " connected to room " + zoomId);
@@ -34,8 +33,11 @@ public class WebSocketEventListener {
     // Khi client disconnect
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
-        String sessionId = event.getSessionId();
-        sessionService.removeSession(sessionId);
-        System.out.println("Session " + sessionId + " disconnected");
+        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
+        String sessionId = headerAccessor.getSessionId();
+        if (sessionId != null) {
+            sessionService.removeSession(sessionId);
+            System.out.println("Session " + sessionId + " disconnected");
+        }
     }
 }

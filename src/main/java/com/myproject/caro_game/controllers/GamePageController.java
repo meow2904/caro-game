@@ -9,8 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 public class GamePageController {
 
     @GetMapping("/game/{zoomId}")
-    public String gamePage(@PathVariable String zoomId, Model model) {
-        model.addAttribute("zoomId", zoomId);
+    public String gamePage(Model model) {
         return "game"; 
     }
 }
