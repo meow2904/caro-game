@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import com.myproject.caro_game.models.Game;
 import com.myproject.caro_game.models.Move;
 import com.myproject.caro_game.models.Player;
-import com.myproject.caro_game.models.dto.UserRoomResponse;
+import com.myproject.caro_game.models.res.UserRoomResponse;
 
 @Service
 public class GameService {

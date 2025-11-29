@@ -9,9 +9,6 @@
     <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-        crossorigin="anonymous"></script>
     <style>
         /* Additional styles for join box */
         body {
@@ -153,7 +150,7 @@
             z-index: 999;
         }
 
-        #startBtn {
+        /* #startBtn {
             padding: 8px 16px;
             margin-left: 20px;
             background: #28a745;
@@ -165,33 +162,7 @@
 
         #startBtn.hidden {
             display: none;
-        }
-
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.hidden {
-            display: none;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 260px;
-            text-align: center;
-        }
-
-        .modal-content button {
-            margin: 10px;
-            padding: 10px 16px;
-        }
+        } */
     </style>
 </head>
 
@@ -219,18 +190,29 @@
         </div>
     </div>
 
-    <button id="startBtn" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#startModal" >Start Game</button>
-    <div class="modal fade" id="startModal" tabindex="-1" startModalaria-hidden="true">
-        <div class="modal-content">
-            <h3>🔰 Choose who goes first</h3>
-            <input type="radio" id="hostFirstBtn" name="firstTurn" value="host">
-            <label for="hostFirstBtn">You go first</label>
-            <input type="radio" id="opponentFirstBtn" name="firstTurn" value="opponent">
-            <label for="opponentFirstBtn">Opponent goes first</label>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary">Choose</button>
+    <!-- Button trigger modal -->
+    <button id="startBtn" type="button" class="btn btn-success hidden" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+        Start Game
+    </button>
+    <!-- Modal -->
+    <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="staticBackdropLabel">🔰 Choose who goes first</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="radio" id="hostFirstBtn" name="firstTurn" value="1" checked>
+                    <label for="hostFirstBtn">You go first</label>
+                    <input type="radio" id="opponentFirstBtn" name="firstTurn" value="0">
+                    <label for="opponentFirstBtn">Opponent goes first</label>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="startGame()">Ok</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -246,6 +228,9 @@
             <button id="joinBtn">Join Now</button>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
     <script src="/js/board.js"></script>
 </body>
 

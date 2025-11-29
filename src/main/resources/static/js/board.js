@@ -5,7 +5,7 @@ let stompClient = null;
 
 //Setup board canvas
 const canvas = document.getElementById("board");
-const startBtn  = document.getElementById("startBtn");
+const startBtn = document.getElementById("startBtn");
 const ctx = canvas && canvas.getContext('2d', { alpha: false });
 const cellSize = 30;
 const boardSize = 20; // 20x20
@@ -121,7 +121,6 @@ function initializeGame() {
 
 function setupCanvasEvents() {
     if (!canvas) return;
-
     // Mouse events for panning and placing moves
     canvas.addEventListener('mousedown', handleMouseDown);
     canvas.addEventListener('contextmenu', (ev) => ev.preventDefault());
@@ -129,26 +128,16 @@ function setupCanvasEvents() {
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-
-    console.log("Canvas events attached");
-
-
 }
 
 function setupStartModal() {
     if (!startBtn) return;
-
-    
     canvas.addEventListener('mousedown', handleMouseDown);
     canvas.addEventListener('contextmenu', (ev) => ev.preventDefault());
     canvas.addEventListener('wheel', handleWheel, { passive: false });
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-
-    console.log("Canvas events attached");
-
-    
 }
 
 // ---------------- CANVAS MANAGEMENT ------------------
@@ -413,7 +402,6 @@ function connectWS() {
         { zoomId, userId },
         frame => {
             console.log("WS Connected:", frame);
-
             // Subscribe phòng
             stompClient.subscribe(`/topic/room.${zoomId}`, msg => {
                 const payload = JSON.parse(msg.body);
@@ -421,6 +409,10 @@ function connectWS() {
 
                 if (payload.type === "MOVE") {
                     handleMoveUpdate(payload);
+                }
+                if (payload.type === "ERROR") {
+                    const err = JSON.parse(msg.body);
+                    alert("❌ ERROR: " + err.message);
                 }
                 if (payload.type === "START") {
                     console.log("Game started!");
@@ -432,19 +424,28 @@ function connectWS() {
                 }
             });
 
-            // if (role === "PLAYER_1") {
-            //     stompClient.send("/app/start", {}, JSON.stringify({ zoomId, userId, firstTurn: true }));
-            //     console.log("→ START signal sent");
-            // }
+            stompClient.subscribe(`/user/${userId}/queue/errors`, msg => {
+                const err = JSON.parse(msg.body);
+                alert("❌ ERROR: " + err.message);
+            });
+
         }
     );
 }
 
-function startGame(firstTurn) {
+function startGame2() {
+    const firstTurn = document.querySelector('input[name="firstTurn"]:checked').value === "1";
     if (stompClient && stompClient.connected && role === "PLAYER_1") {
         stompClient.send("/app/start", {}, JSON.stringify({ zoomId, userId, firstTurn }));
-        console.log("→ START signal sent");
     }
 }
+
+function startGame() {
+    const firstTurn = document.querySelector('input[name="firstTurn"]:checked').value === "1";
+    if (stompClient && stompClient.connected && role === "PLAYER_1") {
+        stompClient.send("/app/test", {}, JSON.stringify({ zoomId, userId, firstTurn }));
+    }
+}
+
 
 

@@ -1,4 +1,4 @@
-package com.myproject.caro_game.models.dto;
+package com.myproject.caro_game.models.res;
 
 
 import lombok.Data;

@@ -5,9 +5,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.myproject.caro_game.models.dto.UserRoomResponse;
 import com.myproject.caro_game.models.dto.CreateZoomDto;
 import com.myproject.caro_game.models.dto.JoinZoomDto;
+import com.myproject.caro_game.models.res.UserRoomResponse;
 import com.myproject.caro_game.services.GameService;
 
 
