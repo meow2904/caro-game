@@ -7,7 +7,7 @@ let stompClient = null;
 const canvas = document.getElementById("board");
 const startBtn = document.getElementById("startBtn");
 const ctx = canvas && canvas.getContext('2d', { alpha: false });
-const cellSize = 30;
+const cellSize = 100;
 const boardSize = 20; // 20x20
 const board = Array(boardSize * boardSize).fill(null);
 
@@ -39,7 +39,8 @@ let isGameReady = false;
     document.getElementById("zoomIdSpan").textContent = zoomId || "Chưa có";
 
     if (role === "PLAYER_1") {
-        document.getElementById("startBtn").classList.remove("hidden");
+        const s = document.getElementById("startBtn");
+        if (s) s.classList.remove("d-none");
     }
 
     // Check if user has joined
@@ -57,27 +58,48 @@ function showJoinForm() {
     const joinBox = document.getElementById("joinBox");
     const canvasWrap = document.getElementById("canvasWrap");
 
-    // Show join box overlay
-    joinBox.classList.remove("hidden");
-    canvasWrap.classList.add("disabled");
+    // Show Bootstrap join modal
+    const joinModalEl = document.getElementById('joinModal');
+    if (joinModalEl) {
+        try {
+            const modal = (window.bootstrap && window.bootstrap.Modal)
+                ? (window.bootstrap.Modal.getInstance(joinModalEl) || new window.bootstrap.Modal(joinModalEl))
+                : null;
+            if (modal && typeof modal.show === 'function') modal.show();
+        } catch (e) {
+            console.warn('Bootstrap modal show failed', e);
+            // fallback: ensure an element exists for older code
+            joinModalEl.classList.remove('d-none');
+        }
+    }
 
     // Update role display
     document.getElementById("roleSpan").textContent = "Unknown";
     document.getElementById("playerName").textContent = "Not joined";
 
-    // Attach join button handler
-    document.getElementById("joinBtn").onclick = joinRoom;
+    // Attach join button handler to Bootstrap modal button
+    const joinBtnEl = document.getElementById('joinBtn');
+    if (joinBtnEl) joinBtnEl.onclick = joinRoom;
 
-    console.log("Showing join form - Canvas not initialized");
+    console.log("Showing join modal - Canvas not initialized");
 }
 
 function showGameBoard() {
-    const joinBox = document.getElementById("joinBox");
     const canvasWrap = document.getElementById("canvasWrap");
 
-    // Hide join box
-    joinBox.classList.add("hidden");
-    canvasWrap.classList.remove("disabled");
+    // Hide join modal if present
+    const joinModalEl = document.getElementById('joinModal');
+    if (joinModalEl) {
+        try {
+            const modal = (window.bootstrap && window.bootstrap.Modal)
+                ? (window.bootstrap.Modal.getInstance(joinModalEl) || new window.bootstrap.Modal(joinModalEl))
+                : null;
+            if (modal && typeof modal.hide === 'function') modal.hide();
+        } catch (e) {
+            console.warn('Failed to hide join modal', e);
+        }
+    }
+    if (canvasWrap) canvasWrap.classList.remove("disabled");
 
     // Update role display
     const roleText = role === "PLAYER_1" ? "X" : "O";
@@ -165,8 +187,12 @@ function toBoardCoords(screenX, screenY) {
     const x = (screenX - rect.left) - offsetX;
     const y = (screenY - rect.top) - offsetY;
     const cell = cellSize * scale;
-    const gx = Math.floor(x / cell + (x < 0 && x % cell !== 0 ? -1 : 0));
-    const gy = Math.floor(y / cell + (y < 0 && y % cell !== 0 ? -1 : 0));
+
+    // Use straightforward floor division. Math.floor works for negative coordinates
+    // (e.g. x/cell = -0.2 -> Math.floor -> -1) which is the intended cell index.
+    const gx = Math.floor(x / cell);
+    const gy = Math.floor(y / cell);
+
     return { gx, gy };
 }
 
@@ -293,6 +319,8 @@ function handleMouseUp(ev) {
     // If it was a click (no significant movement), place a move
     if (!movedDuringDrag) {
         const { gx, gy } = toBoardCoords(ev.clientX, ev.clientY);
+        // Debug: log computed coordinates to help diagnose mapping issues
+        // console.log('Click -> client:', { x: ev.clientX, y: ev.clientY }, 'rect-offset:', { offsetX, offsetY }, '-> board cell:', { gx, gy });
         placeMove(gx, gy);
     }
 }
@@ -306,7 +334,7 @@ function handleWheel(ev) {
     const delta = -ev.deltaY;
     const zoomFactor = delta > 0 ? 1.12 : 0.9;
     const oldScale = scale;
-    const newScale = Math.min(3, Math.max(0.4, scale * zoomFactor));
+    const newScale = Math.min(10, Math.max(0.3, scale * zoomFactor));
 
     // Get mouse position relative to canvas
     const rect = canvas.getBoundingClientRect();
@@ -346,7 +374,7 @@ function placeMove(gx, gy) {
 // ------------- JOIN ROOM --------------
 async function joinRoom() {
     const name = document.getElementById("joinName").value.trim();
-    if (!name) return alert("Nhập tên!");
+    if (!name) return alert("Enter name!");
 
     const res = await fetch("/api/join", {
         method: "POST",
@@ -365,7 +393,7 @@ async function joinRoom() {
     }
     const data = await res.json();
     sessionStorage.setItem("playerName", name);
-    console.log("Join successful:", data);
+    // console.log("Join successful:", data);
 
     // Update local variables
     zoomId = data.zoomId;
@@ -381,7 +409,21 @@ function handleMoveUpdate(payload) {
     const key = payload.x + ',' + payload.y;
     moves.set(key, payload.symbol);
     history.push({ key, symbol: payload.symbol, player: payload.userId });
-    console.log("Move added:", { key, symbol: payload.symbol });
+    //console.log("Move added:", { key, symbol: payload.symbol });
+
+    // Update which player's turn it is now: after someone placed, it's the other player's turn
+    try {
+        // If the player who placed the move is the current user, turn is opponent's; otherwise it's your turn
+        const turnDisplay = (payload.userId === userId) ? 'Opponent' : 'You';
+        const turnSpanEl = document.getElementById('turnSpan');
+        if (turnSpanEl) turnSpanEl.textContent = turnDisplay;
+
+        // Also update local 'turn' symbol for rendering/logic: flip symbol
+        turn = (payload.symbol === 'X') ? 'O' : 'X';
+    } catch (e) {
+        console.warn('Failed to update turn display', e);
+    }
+
     draw();
 }
 
@@ -394,6 +436,7 @@ function handleWin(payload) {
 
 
 // --------------- WEBSOCKET --------------------
+// Connect to WebSocket server and setup subscriptions
 function connectWS() {
     const socket = new SockJS(`/ws?zoomId=${zoomId}&userId=${userId}`);
     stompClient = Stomp.over(socket);
@@ -401,46 +444,108 @@ function connectWS() {
     stompClient.connect(
         { zoomId, userId },
         frame => {
-            console.log("WS Connected:", frame);
-            // Subscribe phòng
+            console.log("✅ WS Connected:", frame);
+
+            // Subscribe zoom
             stompClient.subscribe(`/topic/room.${zoomId}`, msg => {
                 const payload = JSON.parse(msg.body);
-                console.log("← Server message:", payload);
+                console.log("← WS Message:");
 
                 if (payload.type === "MOVE") {
                     handleMoveUpdate(payload);
                 }
+
                 if (payload.type === "ERROR") {
                     const err = JSON.parse(msg.body);
+                    console.log("← Error message:", err);
                     alert("❌ ERROR: " + err.message);
                 }
+
+                // Handle game start and first player notification
                 if (payload.type === "START") {
-                    console.log("Game started!");
-                    if (userId == payload.userId)
-                        alert("You are the first!");
+                    const isHost = (userId === payload.userId);
+
+                    // Notify only the opponent (non-host) who will go first
+                    if (!isHost) {
+                        const hostGoesFirst = !!payload.firstTurn;
+                        const who = hostGoesFirst ? "host" : "you";
+                        alert(`Game started! Host set ${who} is First turn`);
+                    }
+
+                    // Also update the displayed "turn" (who starts) similar to handleMoveUpdate
+                    try {
+                        const hostGoesFirst = !!payload.firstTurn;
+                        // If host goes first, starter is the host; otherwise it's the other player
+                        const starterIsYou = hostGoesFirst ? (userId === payload.userId) : (userId !== payload.userId);
+                        const turnSpanEl = document.getElementById('turnSpan');
+                        if (turnSpanEl) turnSpanEl.textContent = starterIsYou ? 'You' : 'Opponent';
+
+                        // Update local 'turn' symbol for rendering/logic
+                        const mySymbol = (role === "PLAYER_1") ? 'X' : 'O';
+                        turn = starterIsYou ? mySymbol : (mySymbol === 'X' ? 'O' : 'X');
+                    } catch (e) {
+                        console.warn('Failed to set starter display for START payload', e);
+                    }
+
+                        // Hide start button for everyone 
+                    const startBtnEl = document.getElementById('startBtn');
+                    if (startBtnEl) startBtnEl.classList.add('d-none');
+
+                    // Close modal only for the host (creator) side
+                    if (isHost) {
+                        const startModalEl = document.getElementById('chooseFirstTurnModal');
+                        if (startModalEl) {
+                            try {
+                                const bsModal = (window.bootstrap && window.bootstrap.Modal)
+                                    ? (window.bootstrap.Modal.getInstance(startModalEl) || new window.bootstrap.Modal(startModalEl))
+                                    : null;
+
+                                if (bsModal && typeof bsModal.hide === 'function') {
+                                    bsModal.hide();
+                                } else {
+                                    startModalEl.classList.remove('show');
+                                    startModalEl.style.display = 'none';
+                                    startModalEl.hidden = true;
+                                    const backdrops = document.querySelectorAll('.modal-backdrop');
+                                    backdrops.forEach(b => b.parentNode && b.parentNode.removeChild(b));
+                                }
+                            } catch (e) {
+                                console.warn('Failed to close start modal via Bootstrap API, falling back to hide', e);
+                                startModalEl.hidden = true;
+                            }
+                        }
+                    }
                 }
+
                 if (payload.type === "WIN") {
                     handleWin(payload);
                 }
             });
 
-            stompClient.subscribe(`/user/${userId}/queue/errors`, msg => {
+            // Subscribe user-specific queue
+            stompClient.subscribe(`/queue/${userId}/message`, msg => {
                 const err = JSON.parse(msg.body);
+                console.log("← Error message:", err);
                 alert("❌ ERROR: " + err.message);
             });
-
+        },
+        error => {
+            console.error("❌ WS Connection failed:", error);
+            alert("❌ WebSocket connection failed. Please reload the page.");
         }
     );
 }
 
-function startGame2() {
+function startGame() {
     const firstTurn = document.querySelector('input[name="firstTurn"]:checked').value === "1";
     if (stompClient && stompClient.connected && role === "PLAYER_1") {
         stompClient.send("/app/start", {}, JSON.stringify({ zoomId, userId, firstTurn }));
     }
 }
 
-function startGame() {
+
+//change the test function to startGame to the server
+function test() {
     const firstTurn = document.querySelector('input[name="firstTurn"]:checked').value === "1";
     if (stompClient && stompClient.connected && role === "PLAYER_1") {
         stompClient.send("/app/test", {}, JSON.stringify({ zoomId, userId, firstTurn }));

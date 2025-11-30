@@ -2,12 +2,13 @@ async function newGame() {
     const zoomLink = document.getElementById("zoomLink");
     const playerName = document.getElementById("playerName").value.trim();
     if (!playerName) {
-        alert("Vui lòng nhập tên của bạn!");
+        alert("Please enter your name!");
+        document.getElementById("playerName").focus();
         return;
     }
 
     try {
-        // Gọi API tạo phòng
+        // Call API to create room
         const response = await fetch("/api/createZoom", {
             method: "POST",
             headers: {
@@ -24,22 +25,45 @@ async function newGame() {
         sessionStorage.setItem("userId", userId);
         sessionStorage.setItem("role", role);
 
-        zoomLink.innerHTML = `Link game: <a href="/game/${zoomId}" target="_blank">${zoomId}</a>`;
+        document.getElementById("zoomLinkText").innerHTML = `🎮 ZoomId: <a href="/game/${zoomId}" target="_blank" class="alert-link">${zoomId}</a>`;
+        zoomLink.classList.remove("d-none");
 
-        // Lưu tên người chơi tạm (nếu muốn)
+        // Temporarily save player name (optional)
         sessionStorage.setItem("playerName", playerName);
 
-        // Chuyển sang trang game
-        window.location.href = `/game/${zoomId}`;
+        // Redirect to game page after a short delay
+        setTimeout(() => {
+            window.location.href = `/game/${zoomId}`;
+        }, 4000);
 
     } catch (err) {
         console.error(err);
-        alert("Tạo phòng thất bại, thử lại!");
+        alert("Tạo phòng thất bại, vui lòng thử lại!");
     }
 }
 
-// Gắn sự kiện nút khi DOM đã load
+// Attach button event when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
     const createBtn = document.getElementById("createGameBtn");
+    const joinBtn = document.getElementById("joinGameBtn");
+    
     createBtn.addEventListener("click", newGame);
+    joinBtn.addEventListener("click", joinGame);
 });
+
+async function joinGame() {
+    const zoomId = document.getElementById("zoomIdInput").value.trim();
+    if (!zoomId) {
+        alert("Please enter Zoom ID!");
+        document.getElementById("zoomIdInput").focus();
+        return;
+    }
+
+    try {
+        // Redirect directly to game page with zoomId
+        window.location.href = `/game/${zoomId}`;
+    } catch (err) {
+        console.error(err);
+        alert("Lỗi khi join game, vui lòng thử lại!");
+    }
+}

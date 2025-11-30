@@ -1,20 +1,73 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>X-O funny</title>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/base}">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-  </head>
-  <body>
-    <div id="playerForm">
-        <input type="text" id="playerName" placeholder="Nhập tên của bạn">
-        <button id="createGameBtn">Tạo game mới</button>
+<head>
+  <title>Game Lobby</title>
+  <th:block layout:fragment="extra-head">
+    <style>
+      body {
+        /* background: linear-gradient(135deg, #dde0ec 0%, #c4a7e0 100%); */
+        min-height: 100vh;
+      }
+    </style>
+  </th:block>
+</head>
+
+<body>
+  <main layout:fragment="content" class="d-flex align-items-center justify-content-center min-vh-100">
+    <div class="card border-0  shadow-lg" style="max-width: 500px; width: 100%; background: linear-gradient(135deg, #7dacd3 0%, #c4a7e0 100%); border-radius: 20px;">
+      <div class="card-body p-5">
+        <!-- Title -->
+        <h1 class="text-center fw-bold mb-2" style="color: #0a0a0a; font-size: 2.5rem;">Game Lobby</h1>
+        <p class="text-center text-black mb-4">Enter your information to start</p>
+
+        <!-- Form -->
+        <div class="mb-4">
+          <label class="form-label text-black small fw-bold mb-2">Your Name</label>
+          <input type="text" id="playerName" class="form-control form-control-lg border-secondary-subtle" 
+                 placeholder="Enter your name..." style="background: rgb(247, 247, 247); color: #0a0a0a;">
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label text-black small fw-bold mb-2">Zoom ID</label>
+          <input type="text" id="zoomIdInput" class="form-control form-control-lg border-secondary-subtle" 
+                 placeholder="Enter Zoom ID..." style="background: rgb(247, 247, 247); color: #0a0a0a;">
+        </div>
+
+        <!-- Buttons -->
+        <div class="row gap-2">
+          <div class="col">
+            <button id="createGameBtn" class="btn btn-lg w-100 text-white fw-bold" 
+                    style="background: linear-gradient(135deg, #c041eb 0%, #8b2fb8 100%);">
+              ✨ New Game
+            </button>
+          </div>
+          <div class="col">
+            <button id="joinGameBtn" class="btn btn-lg w-100 text-white fw-bold" 
+                    style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);">
+              🔗 Join Zoom
+            </button>
+          </div>
+        </div>
+
+        <!-- Info Text -->
+        <div class="text-center text-black small mt-4">
+          <p class="mb-1">• New Game requires entering your name</p>
+          <p>• Join Zoom requires entering Zoom ID</p>
+        </div>
+
+        <!-- Zoom Link Display -->
+        <div id="zoomLink" class="alert alert-success d-none mt-3 mb-0">
+          <span id="zoomLinkText"></span>
+        </div>
+      </div>
     </div>
-    <p id="zoomLink"></p>
+  </main>
 
+  <th:block layout:fragment="extra-scripts">
     <script src="/js/game.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-  </body>
+  </th:block>
+</body>
+
 </html>

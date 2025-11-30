@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import com.myproject.caro_game.models.Game;
 import com.myproject.caro_game.models.Move;
 import com.myproject.caro_game.models.Player;
+import com.myproject.caro_game.models.Point;
+import com.myproject.caro_game.models.res.MoveResult;
 import com.myproject.caro_game.models.res.UserRoomResponse;
 
 @Service
@@ -37,7 +39,7 @@ public class GameService {
         try {
             Game game = games.get(zoomId);
             if (game == null)
-                throw new Exception("Room not found");
+                throw new Exception("Room's not exist!");
             Player player2 = new Player(playerName, 'O');
             game.addPlayer(player2);
             return new UserRoomResponse(zoomId, player2.getUserId(), "PLAYER_2");
@@ -46,31 +48,44 @@ public class GameService {
         }
     }
 
-    public boolean placeMove(String zoomId, Move move) {
+    public MoveResult placeMove(String zoomId, Move move) {
         Game game = games.get(zoomId);
-        if (game == null)
-            return false;
+        if (game == null) return new MoveResult(false, null);
+
         Player current = game.getCurrentPlayer();
         if (!current.getUserId().equals(move.userId()))
-            return false;
+            return new MoveResult(false, null);
 
-        boolean success = game.getBoard().placeMove(move.point(), move.symbol());
-        if (success)
-            game.switchPlayer();
-        return success;
+        Point point = new Point(move.x(), move.y());
+        char symbol = current.getSymbol();
+        boolean success = game.getBoard().placeMove(point, symbol);
+
+        if (!success) {
+            return new MoveResult(false, null);
+        }
+
+        // Check win at placed point
+        boolean win = checkWin(point.x(), point.y(), symbol, game);
+        if (win) {
+            return new MoveResult(true, current.getUserId());
+        }
+
+        // No win: switch player and continue
+        game.switchPlayer();
+        return new MoveResult(true, null);
     }
 
     public boolean startGame(String zoomId, String userHostId, boolean firstTurn) {
         try {
             Game game = games.get(zoomId);
             if (game == null)
-                throw new Exception("Room not found");
+                throw new Exception("Room's not exist!");
 
             // check has 2 players
             if (game.getPlayers().size() < 2)
-                throw new Exception("Not enough players");
+                throw new Exception("Players are not enough to start the game");
 
-            // Tìm hostPlayer
+            // Find hostPlayer
             Player hostPlayer = game.getPlayers().stream()
                     .filter(p -> p.getUserId().equals(userHostId))
                     .findFirst()
@@ -95,36 +110,32 @@ public class GameService {
         }
     }
 
-    // /**
-    // * Kiểm tra thắng cơ bản 5 ô liên tiếp
-    // */
-    // private boolean checkWin(int x, int y, char symbol) {
-    // return countContinuous(x, y, symbol, 1, 0) + countContinuous(x, y, symbol,
-    // -1, 0) - 1 >= 5 // ngang
-    // || countContinuous(x, y, symbol, 0, 1) + countContinuous(x, y, symbol, 0, -1)
-    // - 1 >= 5 // dọc
-    // || countContinuous(x, y, symbol, 1, 1) + countContinuous(x, y, symbol, -1,
-    // -1) - 1 >= 5 // chéo \
-    // || countContinuous(x, y, symbol, 1, -1) + countContinuous(x, y, symbol, -1,
-    // 1) - 1 >= 5; // chéo /
-    // }
+    /**
+     * Basic win test: 5 consecutive boxes (collected in 4 directions)
+     */
+    private boolean checkWin(int x, int y, char symbol, Game game) {
+        return countContinuous(x, y, symbol, 1, 0, game) + countContinuous(x, y, symbol, -1, 0, game) - 1 >= 5 // horizontal
+                || countContinuous(x, y, symbol, 0, 1, game) + countContinuous(x, y, symbol, 0, -1, game) - 1 >= 5 // vertical
+                || countContinuous(x, y, symbol, 1, 1, game) + countContinuous(x, y, symbol, -1, -1, game) - 1 >= 5 // diag \
+                || countContinuous(x, y, symbol, 1, -1, game) + countContinuous(x, y, symbol, -1, 1, game) - 1 >= 5; // diag /
+    }
 
-    // /**
-    // * Đếm số ô liên tiếp theo hướng dx, dy
-    // */
-    // private int countContinuous(int x, int y, char symbol, int dx, int dy) {
-    // int count = 0;
-    // int nx = x, ny = y;
-    // while (true) {
-    // Character c = game.getBoard().getSymbolAt(nx, ny);
-    // if (c != null && c == symbol) {
-    // count++;
-    // nx += dx;
-    // ny += dy;
-    // } else {
-    // break;
-    // }
-    // }
-    // return count;
-    // }
+    /**
+     * Count the number of consecutive cells in dx, dy direction (including the initial cell)
+     */
+    private int countContinuous(int x, int y, char symbol, int dx, int dy, Game game) {
+        int count = 0;
+        int nx = x, ny = y;
+        while (true) {
+            Character c = game.getBoard().getSymbolAt(nx, ny);
+            if (c != null && c == symbol) {
+                count++;
+                nx += dx;
+                ny += dy;
+            } else {
+                break;
+            }
+        }
+        return count;
+    }
 }

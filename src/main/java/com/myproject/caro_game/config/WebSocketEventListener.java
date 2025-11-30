@@ -5,7 +5,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
-import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import com.myproject.caro_game.services.WebSocketSessionService;
@@ -26,7 +25,7 @@ public class WebSocketEventListener {
         String zoomId = (String) sha.getSessionAttributes().get("zoomId");
         if (zoomId != null && userId != null) {
             sessionService.registerSession(zoomId, userId, sessionId);
-            System.out.println("User " + userId + " connected to room " + zoomId);
+            System.out.println(" ===> User " + userId + " connected to room " + zoomId);
         }
     }
 
@@ -37,7 +36,7 @@ public class WebSocketEventListener {
         String sessionId = headerAccessor.getSessionId();
         if (sessionId != null) {
             sessionService.removeSession(sessionId);
-            System.out.println("Session " + sessionId + " disconnected");
+            System.out.println(" ===>  Session " + sessionId + " disconnected");
         }
     }
 }

@@ -8,5 +8,6 @@ public class StartResponse {
     private String type;
     private String zoomId;
     private String userId;
+    private Boolean firstTurn;
     private String message;
 }
