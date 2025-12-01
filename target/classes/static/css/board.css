@@ -1,100 +1,157 @@
 html,
 body {
-    height: 100%;
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f5f6fa;
+  height: 100%;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f6fa;
+}
+
+/* Prevent horizontal scroll on small devices and ensure consistent box-sizing */
+html, body {
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
 }
 
 /* Responsive Topbar */
 #topbar {
-    display: flex;
-    flex-direction: row;
-    gap: 12px;
-    padding: 12px;
-    background: #fff;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    border-radius: 8px;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: space-between;
+  display: flex;
+  gap: 12px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#roleSpan {
+  font-size: 1.05rem;
+}
+
+/* keep canvas area full height under the topbar */
+#canvasWrap {
+  min-height: 60vh;
+}
+
+/* small helper to keep info badges monospace and avoid overflow */
+.info-value {
+  font-family: "Courier New", monospace;
+  max-width: 9.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
 }
 
 /* Mobile: Compact layout (stacked) */
 @media (max-width: 767px) {
-    #topbar {
-        flex-direction: row;
-        padding: 12px;
-        padding: 10px;
-    }
+  #topbar {
+    flex-direction: column;
+    /* spacing handled by Bootstrap utility classes (p-2 / p-md-3, gap-3) */
+    gap: 6px;
+    align-items: stretch;
+  }
 
-    .topbar-info-group {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        width: 100%;
-        align-items: center;
-    }
+  .topbar-info-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
 
-    .topbar-info-item {
-        flex: 0 1 auto;
-        min-width: 90px;
-    }
+  /* make each info item full width so columns align cleanly and reduce padding */
+  .topbar-info-item {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px;
+  }
+
+  /* actions (buttons) — layout primarily handled by Bootstrap utilities; keep small tweaks */
+  .topbar-actions {
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  /* hide text labels on mobile, show only icon and value */
+  .topbar-info-item small {
+    display: none;
+  }
 }
 
 /* Tablet and Desktop: Horizontal layout */
 @media (min-width: 768px) {
-    #topbar {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        padding: 16px;
-    }
+  #topbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+  }
 
-    .topbar-info-group {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 16px;
-        align-items: center;
-        flex: 1;
-    }
+  .topbar-info-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    flex: 1;
+  }
 
-    .topbar-info-item {
-        flex: 0 0 auto;
-    }
+  .topbar-info-item {
+    flex: 0 0 auto;
+  }
 }
 
 #canvasWrap {
-    position: relative;
-    flex: 1;
-    overflow: hidden;
-    display: flex;
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+}
+
+/* Make icons / leading emoji and small buttons inside info items uniform width (all sizes) */
+.topbar-info-item > span:first-child,
+.topbar-info-item > button {
+  display: inline-flex;
+  width: 28px;
+  min-width: 28px;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.05rem;
 }
 
 canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-    background: #fff;
-    cursor: grab;
-    flex: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  cursor: grab;
+  flex: 1;
 }
 
 button,
-input[type=range] {
-    padding: 6px 10px;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-    background: #fff;
+input[type="range"] {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #fff;
 }
 
 .small {
-    font-size: 13px;
-    padding: 4px 8px;
+  font-size: 13px;
+  padding: 4px 8px;
 }
 
 #info {
-    margin-left: 8px;
-    color: #555;
-    font-size: 13px;
+  margin-left: 8px;
+  color: #555;
+  font-size: 13px;
 }

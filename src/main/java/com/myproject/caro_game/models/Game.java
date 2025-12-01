@@ -37,4 +37,8 @@ public class Game {
         currentPlayer = (currentPlayer == players.get(0)) ? players.get(1) : players.get(0);
     }
 
+    public void resetGame() {
+        this.board = new Board();
+        this.currentPlayer = null;
+    }
 }

@@ -35,14 +35,40 @@ public class GameService {
         return games.get(zoomId);
     }
 
-    public UserRoomResponse joinToRoom(String zoomId, String playerName) {
+    public UserRoomResponse joinToRoom(String zoomId, String playerName, String userId) {
         try {
             Game game = games.get(zoomId);
             if (game == null)
                 throw new Exception("Room's not exist!");
-            Player player2 = new Player(playerName, 'O');
-            game.addPlayer(player2);
-            return new UserRoomResponse(zoomId, player2.getUserId(), "PLAYER_2");
+
+            // If userId provided, try to find existing player and update their name
+            if (userId != null && !userId.isEmpty()) {
+                Player existing = game.getPlayers().stream()
+                        .filter(p -> p.getUserId().equals(userId))
+                        .findFirst()
+                        .orElse(null);
+
+                if (existing != null) {
+                    // Update player's name if provided
+                    if (playerName != null && !playerName.isEmpty()) existing.setName(playerName);
+                    // determine role
+                    // String role = game.getPlayers().indexOf(existing) == 0 ? "PLAYER_1" : "PLAYER_2";
+                    String role = "PLAYER_2";
+                    return new UserRoomResponse(zoomId, existing.getUserId(), role);
+                }
+                // if userId not found, continue to normal join flow (will add new player below)
+            }
+
+            // Enforce maximum 2 players
+            if (game.getPlayers().size() >= 2)
+                throw new Exception("Room is full!");
+
+            // Assign symbol based on existing players
+            char symbol = game.getPlayers().isEmpty() ? 'X' : 'O';
+            Player newPlayer = new Player(playerName, symbol);
+            game.addPlayer(newPlayer);
+            String role = symbol == 'X' ? "PLAYER_1" : "PLAYER_2";
+            return new UserRoomResponse(zoomId, newPlayer.getUserId(), role);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -137,5 +163,12 @@ public class GameService {
             }
         }
         return count;
+    }
+
+    public void resetGame(String zoomId) {
+        Game game = games.get(zoomId);
+        if (game != null) {
+            game.resetGame();
+        }
     }
 }

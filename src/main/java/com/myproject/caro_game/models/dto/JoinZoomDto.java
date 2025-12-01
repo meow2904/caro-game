@@ -6,4 +6,5 @@ import lombok.Data;
 public class JoinZoomDto {
     private String zoomId;
     private String playerName;
+    private String userId;
 }

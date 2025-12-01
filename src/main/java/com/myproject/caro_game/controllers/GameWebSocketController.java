@@ -13,6 +13,7 @@ import com.myproject.caro_game.models.dto.StartRequest;
 import com.myproject.caro_game.models.res.ErrorResponse;
 import com.myproject.caro_game.models.res.MoveResponse;
 import com.myproject.caro_game.models.res.MoveResult;
+import com.myproject.caro_game.models.res.ResetResponse;
 import com.myproject.caro_game.models.res.StartResponse;
 import com.myproject.caro_game.models.res.WinResponse;
 import com.myproject.caro_game.services.GameService;
@@ -115,6 +116,28 @@ public class GameWebSocketController {
             messagingTemplate.convertAndSend(
                     "/queue/" + request.getUserId() + "/message",
                     err);
+        }
+    }
+
+    @MessageMapping("/reset")
+    public void handleReset(@Payload java.util.Map<String, String> request) {
+        try {
+            String zoomId = request.get("zoomId");
+            if (zoomId == null || zoomId.isEmpty()) {
+                throw new Exception("zoomId is required");
+            }
+
+            // Reset game on server side
+            gameService.resetGame(zoomId);
+
+            // Broadcast RESET message to all players in room
+            ResetResponse resetResponse = new ResetResponse(null, zoomId, "Game has been reset");
+            resetResponse.setType("RESET");
+            messagingTemplate.convertAndSend("/topic/room." + zoomId, (Object) resetResponse);
+            System.out.println("RESET broadcasted for room: " + zoomId);
+
+        } catch (Exception e) {
+            System.err.println("Error handling reset: " + e.getMessage());
         }
     }
 

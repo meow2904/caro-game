@@ -9,105 +9,149 @@
         <link rel="stylesheet" href="/css/board.css">
         <script src="https://cdn.jsdelivr.net/npm/sockjs-client"></script>
         <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
-        <!-- Minimal custom styles: rely on Bootstrap utilities for layout and responsiveness -->
-        <style>
-            /* keep canvas area full height under the topbar */
-            #canvasWrap {
-                min-height: 60vh;
-            }
-
-            /* small helper to keep info badges monospace */
-            .info-value {
-                font-family: 'Courier New', monospace;
-            }
-        </style>
     </th:block>
 </head>
 
 <body>
     <main layout:fragment="content" class="d-flex flex-column vh-100">
         <!-- Top bar with game info (horizontal row) -->
-        <div id="topbar">
+        <div id="topbar" class="d-flex bg-white shadow-sm rounded align-items-center justify-content-between gap-3 p-2 p-md-3">
             <!-- Left: Info items -->
             <div class="topbar-info-group d-flex flex-wrap">
-                <div class="topbar-info-item d-flex align-items-center gap-2 p-2">
+                <div class="topbar-info-item d-flex align-items-center gap-1 p-2">
                     <span>🎮</span>
                     <small class="text-muted">Room ID</small>
-                    <span class="badge bg-light text-dark info-value" id="zoomIdSpan">-</span>
+                    <span class="pt-2 badge bg-light text-dark info-value" id="zoomIdSpan">-</span>
+                    <button id="copyZoomBtn" type="button" class="btn btn-sm px-0" title="Copy Room ID" aria-label="Copy Room ID">📋</button>
                 </div>
-                <div class="topbar-info-item d-flex align-items-center gap-2 p-2">
+                <div class="topbar-info-item d-flex align-items-center gap-1 p-2">
                     <span>👤</span>
                     <small class="text-muted">Player</small>
-                    <span class="badge bg-light text-dark info-value" id="playerName">Waiting...</span>
+                    <span class="pt-2 badge bg-light text-dark info-value" id="playerName">Waiting...</span>
                 </div>
-                <div class="topbar-info-item d-flex align-items-center gap-2 p-2">
+                <div class="topbar-info-item d-flex align-items-center gap-1 p-2">
                     <span>⚑</span>
                     <small class="text-muted">Role</small>
-                    <span class="badge bg-light text-dark info-value" id="roleSpan">Waiting...</span>
+                    <span class="pt-2 badge bg-light text-dark info-value" id="roleSpan">Waiting...</span>
                 </div>
-                <div class="topbar-info-item d-flex align-items-center gap-2 p-2">
+                <div class="topbar-info-item d-flex align-items-center gap-1 p-2">
                     <span>🔁</span>
                     <small class="text-muted">Turn</small>
-                    <span class="badge bg-light text-dark info-value" id="turnSpan"></span>
+                    <span class="pt-2 badge bg-light text-dark info-value" id="turnSpan"></span>
                 </div>
             </div>
 
             <!-- Right: Actions (start button) -->
-            <div class="topbar-actions p-2">
+            <div class="topbar-actions d-flex p-0 p-sm-2 justify-content-start">
                 <button id="startBtn" type="button" class="btn btn-success d-none" data-bs-toggle="modal"
                     data-bs-target="#chooseFirstTurnModal">Start</button>
+                <button id="resetBtn" type="button" class="btn btn-warning d-none" onclick="resetGameBoard()">Reset Game</button>
             </div>
         </div>
-            <!-- Modal -->
-            <div class="modal fade" id="chooseFirstTurnModal" data-bs-backdrop="static" data-bs-keyboard="false"
-                tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h1 class="modal-title fs-5" id="staticBackdropLabel">🔰 Choose who goes first</h1>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <input type="radio" id="hostFirstBtn" name="firstTurn" value="1" checked>
-                            <label for="hostFirstBtn">You go first</label>
-                            <input type="radio" id="opponentFirstBtn" name="firstTurn" value="0">
-                            <label for="opponentFirstBtn">Opponent goes first</label>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-primary" onclick="startGame()">Ok</button>
-                        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="chooseFirstTurnModal" data-bs-backdrop="static" data-bs-keyboard="false"
+            tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="staticBackdropLabel">🔰 Choose who goes first</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="radio" id="hostFirstBtn" name="firstTurn" value="1" checked>
+                        <label for="hostFirstBtn">You go first</label>
+                        <input type="radio" id="opponentFirstBtn" name="firstTurn" value="0">
+                        <label for="opponentFirstBtn">Opponent goes first</label>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="startGame()">Ok</button>
                     </div>
                 </div>
             </div>
+        </div>
 
         <!-- Canvas wrapper (separate from topbar) -->
-        <div id="canvasWrap" class="flex-fill position-relative mt-3">
+        <div id="canvasWrap" class="flex-fill position-relative m-3">
             <canvas id="board"></canvas>
         </div>
 
-            <!-- Join Modal (Bootstrap) -->
-            <div class="modal fade" id="joinModal" tabindex="-1" aria-labelledby="joinModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="joinModalLabel">🎯 Join Game Room</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <!-- Join Modal (Bootstrap) -->
+        <div class="modal fade" id="joinModal" tabindex="-1" aria-labelledby="joinModalLabel" data-bs-keyboard="false"
+            data-bs-backdrop="static" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="joinModalLabel">🎯 Join Game Room</h5>
+                        <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> -->
+                    </div>
+                    <div class="modal-body">
+                        <!-- <p class="mb-2">Enter your name to start playing</p>
+                        <input type="text" id="joinName" class="form-control" placeholder="Your name" maxlength="20"
+                            autocomplete="off">
+ -->
+
+                        <div class="mb-4">
+                            <label class="form-label text-black small fw-bold mb-2">Enter your name to start playing</label>
+                            <input type="text" id="joinName"
+                                class="form-control border-secondary-subtle"
+                                placeholder="Enter your name..."
+                                maxlength="20"
+                                style="background: rgb(247, 247, 247); color: #0a0a0a;"
+                                autocomplete="off"
+                                >
                         </div>
-                        <div class="modal-body">
-                            <p class="mb-2">Enter your name to start playing</p>
-                            <input type="text" id="joinName" class="form-control" placeholder="Your name" maxlength="20"
-                                autocomplete="off">
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" id="joinBtn" class="btn btn-primary">Join Now</button>
-                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id="joinBtn" class="btn btn-primary">Join Now</button>
                     </div>
                 </div>
             </div>
+        </div>
     </main>
 
     <th:block layout:fragment="extra-scripts">
         <script src="/js/board.js"></script>
+        <script>
+            (function(){
+                const btn = document.getElementById('copyZoomBtn');
+                if(!btn) return;
+                btn.addEventListener('click', function(){
+                    const span = document.getElementById('zoomIdSpan');
+                    const val = span ? span.textContent.trim() : '';
+                    if(!val || val === '-'){
+                        const prev = btn.textContent;
+                        btn.textContent = '—';
+                        setTimeout(()=> btn.textContent = prev, 1200);
+                        return;
+                    }
+                    if(navigator.clipboard && navigator.clipboard.writeText){
+                        navigator.clipboard.writeText(val).then(()=>{
+                            const prev = btn.textContent;
+                            btn.textContent = 'Copied';
+                            setTimeout(()=> btn.textContent = prev, 1400);
+                        }).catch(()=>{
+                            alert('Unable to copy room ID to clipboard');
+                        });
+                    } else {
+                        const ta = document.createElement('textarea');
+                        ta.value = val;
+                        ta.style.position = 'fixed';
+                        ta.style.left = '-9999px';
+                        document.body.appendChild(ta);
+                        ta.select();
+                        try{
+                            document.execCommand('copy');
+                            const prev = btn.textContent;
+                            btn.textContent = 'Copied';
+                            setTimeout(()=> btn.textContent = prev, 1400);
+                        }catch(e){
+                            alert('Unable to copy room ID');
+                        }
+                        document.body.removeChild(ta);
+                    }
+                });
+            })();
+        </script>
     </th:block>
 </body>
 

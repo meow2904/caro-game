@@ -25,16 +25,40 @@ async function newGame() {
         sessionStorage.setItem("userId", userId);
         sessionStorage.setItem("role", role);
 
-        document.getElementById("zoomLinkText").innerHTML = `🎮 ZoomId: <a href="/game/${zoomId}" target="_blank" class="alert-link">${zoomId}</a>`;
+        document.getElementById("zoomLinkText").innerHTML = `
+          <div class="d-flex align-items-center gap-2">
+            <span>🎮 ZoomId: <strong>${zoomId}</strong></span>
+            <button type="button" class="btn btn-sm btn-outline-success" onclick="copyToClipboard('${zoomId}')">📋 Copy</button>
+          </div>
+        `;
         zoomLink.classList.remove("d-none");
+
+        // Disable buttons
+        const createBtn = document.getElementById("createGameBtn");
+        const joinBtn = document.getElementById("joinGameBtn");
+        createBtn.disabled = true;
+        joinBtn.disabled = true;
 
         // Temporarily save player name (optional)
         sessionStorage.setItem("playerName", playerName);
 
-        // Redirect to game page after a short delay
-        setTimeout(() => {
-            window.location.href = `/game/${zoomId}`;
-        }, 4000);
+        // Countdown and redirect
+        let countdown = 5;
+        const countdownEl = document.createElement("div");
+        countdownEl.className = "alert alert-info mt-3 mb-0 text-center";
+        countdownEl.id = "countdownText";
+        zoomLink.parentNode.insertBefore(countdownEl, zoomLink.nextSibling);
+
+        const countdownInterval = setInterval(() => {
+            countdownEl.textContent = `⏳ Entering game in ${countdown} second${countdown !== 1 ? 's' : ''}...`;
+            countdown--;
+            if (countdown < 0) {
+                clearInterval(countdownInterval);
+                window.location.href = `/game/${zoomId}`;
+            }
+        }, 1000);
+
+        countdownEl.textContent = `⏳ Entering game in 3 seconds...`;
 
     } catch (err) {
         console.error(err);
@@ -50,6 +74,14 @@ document.addEventListener("DOMContentLoaded", () => {
     createBtn.addEventListener("click", newGame);
     joinBtn.addEventListener("click", joinGame);
 });
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert("✅ ZoomId copied to clipboard!");
+    }).catch(() => {
+        alert("❌ Failed to copy ZoomId");
+    });
+}
 
 async function joinGame() {
     const zoomId = document.getElementById("zoomIdInput").value.trim();
