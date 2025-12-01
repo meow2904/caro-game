@@ -4,6 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Game {
+        private String winner = null;
+
+        public String getWinner() {
+            return winner;
+        }
+
+        public void setWinner(String winner) {
+            this.winner = winner;
+        }
     private Board board = new Board();
     private final List<Player> players = new ArrayList<>();
     private Player currentPlayer;
@@ -40,5 +49,6 @@ public class Game {
     public void resetGame() {
         this.board = new Board();
         this.currentPlayer = null;
+        this.winner = null;
     }
 }

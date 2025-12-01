@@ -93,6 +93,7 @@ public class GameService {
         // Check win at placed point
         boolean win = checkWin(point.x(), point.y(), symbol, game);
         if (win) {
+            game.setWinner(current.getUserId());
             return new MoveResult(true, current.getUserId());
         }
 
@@ -170,5 +171,40 @@ public class GameService {
         if (game != null) {
             game.resetGame();
         }
+    }
+
+    /**
+     * Find game by userId and remove the player from it.
+     * Returns the zoomId and opponent (if exists), or null if player not found.
+     */
+    public Map<String, Object> handlePlayerDisconnect(String userId) {
+        for (Map.Entry<String, Game> entry : games.entrySet()) {
+            String zoomId = entry.getKey();
+            Game game = entry.getValue();
+            
+            Player disconnectedPlayer = game.getPlayers().stream()
+                    .filter(p -> p.getUserId().equals(userId))
+                    .findFirst()
+                    .orElse(null);
+            
+            if (disconnectedPlayer != null) {
+                game.getPlayers().remove(disconnectedPlayer);
+                
+                // Get opponent if exists
+                Player opponent = !game.getPlayers().isEmpty() ? game.getPlayers().get(0) : null;
+                
+                // If no players left, delete the game
+                if (game.getPlayers().isEmpty()) {
+                    games.remove(zoomId);
+                }
+                
+                Map<String, Object> result = new HashMap<>();
+                result.put("zoomId", zoomId);
+                result.put("opponent", opponent);
+                result.put("gameDeleted", game.getPlayers().isEmpty());
+                return result;
+            }
+        }
+        return null;
     }
 }

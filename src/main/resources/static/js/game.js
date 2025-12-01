@@ -76,9 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        alert("✅ ZoomId copied to clipboard!");
-    }).catch(() => {
+    navigator.clipboard.writeText(text).catch(() => {
         alert("❌ Failed to copy ZoomId");
     });
 }

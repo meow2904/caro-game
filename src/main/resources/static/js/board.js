@@ -165,6 +165,9 @@ async function showGameBoard() {
   // Initialize game
   initializeGame();
 
+  // Get the board state from the server and fill it on the interface
+  await fetchBoardState();
+
   console.log("Game board shown - Canvas initialized");
 }
 
@@ -425,7 +428,7 @@ function placeMove(gx, gy) {
   // Ensure game has started
   if (!isGameStarted) {
     alert(
-      "⚠️ Game hasn't started yet. Please wait for the host to start and select who goes first."
+      "⚠️ Game not ready"
     );
     return;
   }
@@ -582,7 +585,22 @@ function handleGameReset() {
   isGameStarted = false;
   isFirstTurnSelected = false;
   draw();
-  console.log("Game board reset");
+  // Re-display Start button for host
+  if (role === "PLAYER_1") {
+    const startBtnEl = document.getElementById("startBtn");
+    if (startBtnEl) startBtnEl.classList.remove("d-none");
+  }
+  console.log("Game board reset, show Start button for host");
+}
+
+function handleOpponentDisconnected(payload) {
+  // Stop game immediately
+  isGameStarted = false;
+  
+  // Show alert to inform player
+  alert("⚠️ Opponent has disconnected from the game. The game is paused.");
+  
+  console.log("← Opponent disconnected from room:", payload.zoomId);
 }
 
 // --------------- WEBSOCKET --------------------
@@ -699,9 +717,15 @@ function connectWS() {
 
       // Subscribe user-specific queue
       stompClient.subscribe(`/queue/${userId}/message`, (msg) => {
-        const err = JSON.parse(msg.body);
-        console.log("← Error message:", err);
-        alert("❌ ERROR: " + err.message);
+        const payload = JSON.parse(msg.body);
+        console.log("← Queue message:", payload);
+        
+        if (payload.type === "OPPONENT_DISCONNECTED") {
+          handleOpponentDisconnected(payload);
+        } else {
+          // Handle other error messages
+          alert("❌ ERROR: " + payload.message);
+        }
       });
     },
     (error) => {
@@ -735,5 +759,57 @@ function test() {
       {},
       JSON.stringify({ zoomId, userId, firstTurn })
     );
+  }
+}
+
+// Hàm mới để lấy trạng thái bàn cờ từ server
+async function fetchBoardState() {
+  if (!zoomId) return;
+  try {
+    const res = await fetch(`/api/boardState?zoomId=${encodeURIComponent(zoomId)}`);
+    if (!res.ok) throw new Error("Error getting board state!");
+    const data = await res.json();
+    // Fill moves lên board
+    moves.clear();
+    if (Array.isArray(data.moves)) {
+      data.moves.forEach(({ x, y, symbol }) => {
+        moves.set(`${x},${y}`, symbol);
+      });
+    }
+    draw();
+
+    const startBtnEl = document.getElementById("startBtn");
+    const resetBtnEl = document.getElementById("resetBtn");
+
+    // If you have won, show the Start button again for the host, hide the Reset button.
+    if (data.winner && role === "PLAYER_1") {
+      if (startBtnEl) startBtnEl.classList.remove("d-none");
+      if (resetBtnEl) resetBtnEl.classList.add("d-none");
+      isGameStarted = false;
+    } else {
+      // Hide Start button if there is a move
+      if (data.moves && data.moves.length > 0 && startBtnEl) {
+        startBtnEl.classList.add("d-none");
+      }
+      // Show current turn
+      if (data.currentPlayer) {
+        const turnSpanEl = document.getElementById("turnSpan");
+        if (turnSpanEl) {
+          turnSpanEl.textContent = (data.currentPlayer === userId) ? "You" : "Opponent";
+        }
+        // Update turn variable for piece placement logic
+        const mySymbol = role === "PLAYER_1" ? "X" : "O";
+        turn = (data.currentPlayer === userId) ? mySymbol : (mySymbol === "X" ? "O" : "X");
+        isGameStarted = true;
+      }
+      // If there is a winner (and not the host), show the Reset button for the host
+      if (data.winner && role === "PLAYER_1") {
+        if (resetBtnEl) resetBtnEl.classList.remove("d-none");
+        if (startBtnEl) startBtnEl.classList.add("d-none");
+        isGameStarted = false;
+      }
+    }
+  } catch (e) {
+    console.error("Error getting board state:", e);
   }
 }
