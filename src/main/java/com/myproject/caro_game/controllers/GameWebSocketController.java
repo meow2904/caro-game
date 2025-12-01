@@ -1,6 +1,7 @@
 package com.myproject.caro_game.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -75,7 +76,7 @@ public class GameWebSocketController {
                 System.out.println("WIN broadcasted for room: " + zoomId + ", winner: " + result.getWinnerUserId());
             }
 
-        } catch (Exception e) {
+        } catch (MessagingException e) {
             ErrorResponse err = new ErrorResponse();
             err.setType("ERROR");
             err.setZoomId(move.zoomId());
@@ -108,7 +109,7 @@ public class GameWebSocketController {
             //         "/queue/" + request.getUserId() + "/message",
             //         response);
 
-        } catch (Exception e) {
+        } catch (MessagingException e) {
             ErrorResponse err = new ErrorResponse();
             err.setType("ERROR");
             err.setZoomId(request.getZoomId());
