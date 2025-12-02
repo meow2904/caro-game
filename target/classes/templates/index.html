@@ -16,7 +16,8 @@
 
 <body>
   <main layout:fragment="content" class="d-flex align-items-center justify-content-center min-vh-100">
-    <div class="card border-0 shadow-lg mx-3" style="max-width: 500px; width: 100%; background: linear-gradient(135deg, #7dacd3 0%, #c4a7e0 100%); border-radius: 20px;">
+    <div class="card border-0 shadow-lg mx-3"
+      style="max-width: 500px; width: 100%; background: linear-gradient(135deg, #7dacd3 0%, #c4a7e0 100%); border-radius: 20px;">
       <div class="card-body p-3 p-sm-4 p-md-5">
         <!-- Title -->
         <h1 class="text-center fw-bold mb-2 display-6" style="color: #0a0a0a;">Game Lobby</h1>
@@ -25,27 +26,27 @@
         <!-- Form -->
         <div class="mb-4">
           <label class="form-label text-black small fw-bold mb-2">Your Name</label>
-          <input type="text" id="playerName" class="form-control form-control-lg border-secondary-subtle" 
-                 placeholder="Enter your name..." style="background: rgb(247, 247, 247); color: #0a0a0a;">
+          <input type="text" id="playerName" class="form-control form-control-lg border-secondary-subtle"
+            placeholder="Enter your name..." style="background: rgb(247, 247, 247); color: #0a0a0a;">
         </div>
 
         <div class="mb-4">
           <label class="form-label text-black small fw-bold mb-2">Zoom ID</label>
-          <input type="text" id="zoomIdInput" class="form-control form-control-lg border-secondary-subtle" 
-                 placeholder="Enter Zoom ID..." style="background: rgb(247, 247, 247); color: #0a0a0a;">
+          <input type="text" id="zoomIdInput" class="form-control form-control-lg border-secondary-subtle"
+            placeholder="Enter Zoom ID..." style="background: rgb(247, 247, 247); color: #0a0a0a;">
         </div>
 
         <!-- Buttons -->
         <div class="row g-2">
           <div class="col-12 col-sm-6">
-            <button id="createGameBtn" class="btn btn-lg w-100 text-white fw-bold" 
-                    style="background: linear-gradient(135deg, #c041eb 0%, #8b2fb8 100%);">
+            <button id="createGameBtn" class="btn btn-lg w-100 text-white fw-bold"
+              style="background: linear-gradient(135deg, #c041eb 0%, #8b2fb8 100%);">
               ✨ New Game
             </button>
           </div>
           <div class="col-12 col-sm-6">
-            <button id="joinGameBtn" class="btn btn-lg w-100 text-white fw-bold" 
-                    style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);">
+            <button id="joinGameBtn" class="btn btn-lg w-100 text-white fw-bold"
+              style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);">
               🔗 Join Zoom
             </button>
           </div>
@@ -57,12 +58,65 @@
           <p>• Join Zoom requires entering Zoom ID</p>
         </div>
 
-        <!-- Zoom Link Display -->
-        <div id="zoomLink" class="alert alert-success d-none mt-3 mb-0">
-          <span id="zoomLinkText"></span>
+        <!-- Button trigger modal -->
+        <div class="text-center text-black small mt-4">
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#gameRulesModal">
+            📋 Game Rules
+          </button>
+          <!-- Modal -->
+          <div class="modal fade" id="gameRulesModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable h-75">
+              <div class="modal-content">
+                <div class="modal-header text-white"
+                  style="background: linear-gradient(135deg, #c041eb 0%, #8b2fb8 100%);">
+                  <h5 class="modal-title fs-3">📋 Game Rules</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="game-rules">
+                    <h5>📋 Board & Players</h5>
+                    <ul>
+                      <li>2 players, each with a symbol: <strong>X</strong> or <strong>O</strong>.</li>
+                      <li>The board is an infinite grid</li>
+                    </ul>
+
+                    <h5>🎯 Turns</h5>
+                    <ul>
+                      <li>Players take turns placing their symbol on an empty cell.</li>
+                      <li>Skipping a turn is not allowed.</li>
+                    </ul>
+
+                    <h5>🏆 Winning</h5>
+                    <ul>
+                      <li>The player who aligns 5 symbols consecutively horizontally, vertically, or diagonally wins.
+                      </li>
+                      <!-- <li>If the board is full and no one wins → draw.</li> -->
+                    </ul>
+
+                    <h5>🤝 Rules for Fair Play</h5>
+                    <ul>
+                      <li>Do not modify the opponent's moves.</li>
+                      <li>No cheating or interfering with the game outcome.</li>
+                    </ul>
+
+                  </div>
+                  <div class="modal-footer p-2" style="background: rgb(243, 243, 243);">
+                    <button class="btn btn-secondary rounded-4"
+                      style="background: linear-gradient(135deg, #c041eb 0%, #8b2fb8 100%);" data-bs-dismiss="modal">Got
+                      It!</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Zoom Link Display -->
+          <div id="zoomLink" class="alert alert-success d-none mt-3 mb-0">
+            <span id="zoomLinkText"></span>
+          </div>
         </div>
       </div>
-    </div>
   </main>
 
   <th:block layout:fragment="extra-scripts">
